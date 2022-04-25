@@ -44,13 +44,13 @@ The search failed because there was no access to our nginx webserver over the in
 **Enable TCP port 80**
 ![](./img/8.security_grouprule_set.png)
 
-When we put insert our public IP address on our browser, the nginx default webpage shows up showing that the webserver block is now visible from the internet via the port 80 which we opened.
+When we insert our public IP address on our browser, the nginx default webpage shows up showing that the webserver block is now visible from the internet via the port 80 which was opened.
 
 ![nginx_success](./img/9.publicip_connect_success.png)
 
 ## Installing MySQL 
 
-We have succeeded in setting up our nginx webserver and ensured its accessible over the internet. Next is to install mySQL which is relational database management server to help us store data and manage content on our web application.
+We have succeeded in setting up our nginx webserver and ensured its accessible over the internet. Next is to install mySQL which is a relational database management server to help store data and manage content on our web application.
 
 Run `sudo apt install mysql-server` 
 
@@ -95,11 +95,31 @@ Creating a configuration for our server block<br/>
 `sudo nano /etc/nginx/sites-available/projectlempstack`
 
 The following snippets represents the configuration required for our web server block to be functional
-.
-.
-.
-.
-.
+```
+#/etc/nginx/sites-available/projectlempstack
+
+server {
+    listen 80;
+    server_name projectlempstack www.projectlempstack;
+    root /var/www/projectlempstack;
+
+    index index.html index.htm index.php;
+
+    location / {
+        try_files $uri $uri/ =404;
+    }
+
+    location ~ \.php$ {
+        include snippets/fastcgi-php.conf;
+        fastcgi_pass unix:/var/run/php/php7.4-fpm.sock;
+     }
+
+    location ~ /\.ht {
+        deny all;
+    }
+
+}
+```
 
 We then link the configuration file to the sites-enabled directory
 
@@ -126,8 +146,7 @@ On a browser enter `http://<public-ip>/info.php`
 
 ![served_php](./img/19.served_php_file.jpg)
 
-![mysql_dbuser_setup](./img/20.mysql_dbuser_setup.jpg)
- 
+
  ## Connecting PHP with MySQL and Fetching Content
 
  Login into our mysql-server `sudo mysql`.<br/>
@@ -138,8 +157,35 @@ On a browser enter `http://<public-ip>/info.php`
 
  Grant the user permission over the created database `GRANT ALL ON 'db_name'.* TO 'db_user'@'%'`
 
- Login into mysql server using the created user
+ `exit` from the mysql-server in which we are currently logged in as root user and then Login into mysql server using the created user.
+
+ ![mysql_dbuser_setup](./img/20.mysql_dbuser_setup.jpg)
+ 
+
+ `mysql -u lemp_user -p`
 
  ![success_userlogin](./img/21.success_userlogin.jpg)
 
- 
+We create a table for the current user inside the lemp_db database and specify content parameters
+
+```
+CREATE TABLE lemp_db.todo_list(
+    item_id INT AUTO_INCREMENT,
+    content VARCHAR(255),
+    PRIMARY KEY (item_id)
+);
+```
+
+Push in contents into the table 
+`INSERT INTO lemp_db.todo_list(content) VALUES ('enter contents')`
+
+![table_insertion](./img/23.table_insertion.jpg)
+
+Create a php file `todo_list.php` in /var/www/projectlempstack directory and paste the following code
+
+![php_code](./img/24.php_code.jpg)
+
+We can then access our webpage via a browser
+`http://<publicIP>/todo_list.php`
+
+![php_served](./img/25.php_served.jpg)
